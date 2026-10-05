@@ -31,8 +31,19 @@ export class MockProvider implements AIProvider {
       "",
       "Y entonces, todo comenzó.",
     ];
+    // En modo adaptación, el demo reparte el texto del usuario entre las viñetas
+    const chunks = input.mode === "adaptar" ? splitIntoChunks(input.idea, input.panelCount) : null;
     const panels = Array.from({ length: input.panelCount }, (_, i) => {
       const speaker = i % 2 === 0 ? hero : rival;
+      if (chunks) {
+        return {
+          scene: `Scene ${i + 1}: ${chunks[i].slice(0, 120)}`,
+          shot: ["wide shot", "medium shot", "close-up", "low angle"][i % 4],
+          characters: [speaker.name],
+          narration: chunks[i],
+          dialogues: [],
+        };
+      }
       return {
         scene: `Scene ${i + 1}: ${speaker.name} in a dramatic moment related to: ${input.idea.slice(0, 80)}`,
         shot: ["wide shot", "medium shot", "close-up", "low angle"][i % 4],
@@ -72,6 +83,18 @@ export class MockProvider implements AIProvider {
 </svg>`;
     return { data: Buffer.from(svg), ext: "svg" as const };
   }
+}
+
+function splitIntoChunks(text: string, parts: number) {
+  const paragraphs = text
+    .split(/\n+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const size = Math.ceil(paragraphs.length / parts) || 1;
+  return Array.from({ length: parts }, (_, i) => {
+    const chunk = paragraphs.slice(i * size, (i + 1) * size).join(" ");
+    return chunk.length > 400 ? `${chunk.slice(0, 400)}…` : chunk;
+  });
 }
 
 function titleFromIdea(idea: string) {

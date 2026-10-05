@@ -1,6 +1,6 @@
 import type { StoryInput } from "./types";
 
-export const SYSTEM_PROMPT = `Eres guionista profesional de manhwa/webtoon. Conviertes la idea del usuario en el guion de UN capítulo completo, listo para dibujar en formato de lectura vertical.
+export const SYSTEM_PROMPT = `Eres guionista profesional de manhwa/webtoon. Conviertes la idea o el texto del usuario en el guion de UN capítulo completo, listo para dibujar en formato de lectura vertical.
 
 Reglas:
 - Historia con inicio, desarrollo y un final de capítulo con gancho (cliffhanger o giro).
@@ -29,6 +29,16 @@ export function buildStoryPrompt(input: StoryInput) {
     lines.push("\nPersonajes ya establecidos (no cambies su appearance):");
     for (const c of input.characters) lines.push(`- ${c.name} (${c.role}): ${c.appearance}`);
   }
-  lines.push(`\nIdea del usuario para este capítulo:\n"""${input.idea}"""`);
+  if (input.mode === "adaptar") {
+    lines.push(
+      "\nMODO ADAPTACIÓN: el usuario te da el texto del capítulo ya escrito.",
+      "- Adáptalo fielmente: respeta los hechos, el orden, los nombres y el tono. No inventes giros nuevos.",
+      "- Reparte el texto entre las viñetas: la narración y los diálogos deben salir del texto original (puedes acortarlos para que quepan).",
+      "- Si el texto es largo, elige los momentos más importantes y visuales para las viñetas.",
+      `\nTexto del capítulo:\n"""${input.idea}"""`,
+    );
+  } else {
+    lines.push(`\nIdea del usuario para este capítulo:\n"""${input.idea}"""`);
+  }
   return lines.filter(Boolean).join("\n");
 }

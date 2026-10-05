@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { createChapter, createSeries, login, register, type FormState } from "../actions";
@@ -62,6 +62,72 @@ export function RegisterForm() {
   );
 }
 
+const MODES = {
+  idea: {
+    label: "Tengo una idea",
+    hint: "La IA inventa la historia a partir de tu idea",
+    max: 4000,
+  },
+  adaptar: {
+    label: "Adaptar mi texto",
+    hint: "Pega el capítulo ya escrito y la IA lo pasa a viñetas",
+    max: 30000,
+  },
+} as const;
+
+function StoryField({ ideaPlaceholder }: { ideaPlaceholder: string }) {
+  const [mode, setMode] = useState<keyof typeof MODES>("idea");
+  const [length, setLength] = useState(0);
+  const current = MODES[mode];
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-2 sm:grid-cols-2">
+        {(Object.keys(MODES) as (keyof typeof MODES)[]).map((key) => (
+          <label
+            key={key}
+            className="cursor-pointer rounded-lg border border-border bg-surface-2 px-3 py-2 has-[:checked]:border-accent has-[:checked]:bg-accent/15"
+          >
+            <input
+              type="radio"
+              name="mode"
+              value={key}
+              checked={mode === key}
+              onChange={() => setMode(key)}
+              className="sr-only"
+            />
+            <span className="block text-sm font-semibold">{MODES[key].label}</span>
+            <span className="block text-xs text-muted">{MODES[key].hint}</span>
+          </label>
+        ))}
+      </div>
+      <label className="block space-y-1">
+        <textarea
+          className={`input ${mode === "adaptar" ? "min-h-80" : "min-h-40"}`}
+          name="idea"
+          required
+          maxLength={current.max}
+          onChange={(e) => setLength(e.target.value.length)}
+          placeholder={
+            mode === "adaptar"
+              ? "Pega aquí el texto completo del capítulo: narración, diálogos… La IA respetará los hechos y el orden."
+              : ideaPlaceholder
+          }
+        />
+        <span className="flex justify-between gap-4 text-xs text-muted">
+          <span>
+            {mode === "adaptar"
+              ? "Consejo: usa unas 12–20 viñetas para un capítulo largo."
+              : "Cuenta de qué trata, los personajes y qué pasa. Cuanto más detalle, mejor."}
+          </span>
+          <span className={length > current.max * 0.9 ? "text-amber-300" : ""}>
+            {length.toLocaleString("es")}/{current.max.toLocaleString("es")}
+          </span>
+        </span>
+      </label>
+    </div>
+  );
+}
+
 function PanelCountField({ max }: { max: number }) {
   return (
     <label className="block space-y-1">
@@ -76,18 +142,7 @@ export function CreateSeriesForm({ maxPanels }: { maxPanels: number }) {
   const [state, action] = useActionState(createSeries, undefined);
   return (
     <form action={action} className="space-y-6">
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">Tu idea</span>
-        <textarea
-          className="input min-h-40"
-          name="idea"
-          required
-          placeholder="Ej: Un cazador de rango E muere en una mazmorra y despierta 10 años en el pasado con un sistema que solo él puede ver. Esta vez jura proteger a su hermana…"
-        />
-        <span className="text-xs text-muted">
-          Cuenta de qué trata, los personajes y qué pasa en el capítulo. Cuanto más detalle, mejor.
-        </span>
-      </label>
+      <StoryField ideaPlaceholder="Ej: Un cazador de rango E muere en una mazmorra y despierta 10 años en el pasado con un sistema que solo él puede ver. Esta vez jura proteger a su hermana…" />
 
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">Estilo visual</legend>
@@ -131,16 +186,7 @@ export function NewChapterForm({ seriesId, maxPanels }: { seriesId: string; maxP
   return (
     <form action={action} className="space-y-6">
       <input type="hidden" name="seriesId" value={seriesId} />
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">¿Qué pasa en este capítulo?</span>
-        <textarea
-          className="input min-h-40"
-          name="idea"
-          required
-          placeholder="Ej: El protagonista entra por primera vez a la torre y se enfrenta al guardián del piso 1…"
-        />
-        <span className="text-xs text-muted">La IA recuerda los capítulos anteriores y los personajes.</span>
-      </label>
+      <StoryField ideaPlaceholder="Ej: El protagonista entra por primera vez a la torre y se enfrenta al guardián del piso 1… (la IA recuerda los capítulos anteriores)" />
       <PanelCountField max={maxPanels} />
       <ErrorBox state={state} />
       <Submit pending="Enviando…">Generar capítulo</Submit>

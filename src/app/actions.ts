@@ -62,14 +62,29 @@ export async function logout() {
 
 const maxPanels = () => clamp(Number(process.env.MAX_PANELS) || 16, 4, 30);
 
-const ChapterSchema = z.object({
-  idea: z
-    .string()
-    .trim()
-    .min(20, "Cuéntanos un poco más: al menos 20 caracteres")
-    .max(4000, "La idea es demasiado larga (máx. 4000 caracteres)"),
-  panelCount: z.coerce.number().int().min(4).max(30),
-});
+const MAX_IDEA = 4000;
+const MAX_TEXT = 30000;
+
+const ChapterSchema = z
+  .object({
+    mode: z.enum(["idea", "adaptar"]).catch("idea"),
+    idea: z.string().trim().min(20, "Cuéntanos un poco más: al menos 20 caracteres"),
+    panelCount: z.coerce.number().int().min(4).max(30),
+  })
+  .refine((d) => d.idea.length <= (d.mode === "adaptar" ? MAX_TEXT : MAX_IDEA), {
+    error: (issue) =>
+      (issue.input as { mode: string }).mode === "adaptar"
+        ? `El texto es demasiado largo (máx. ${MAX_TEXT} caracteres). Divídelo en varios capítulos.`
+        : `La idea es demasiado larga (máx. ${MAX_IDEA} caracteres). Si es un capítulo ya escrito, usa "Adaptar mi texto".`,
+  });
+
+function parseChapterForm(formData: FormData) {
+  return ChapterSchema.safeParse({
+    mode: formData.get("mode"),
+    idea: formData.get("idea"),
+    panelCount: formData.get("panelCount"),
+  });
+}
 
 async function checkDailyLimit(userId: string) {
   const limit = Number(process.env.DAILY_CHAPTER_LIMIT) || 3;
@@ -82,10 +97,7 @@ export async function createSeries(_: FormState, formData: FormData): Promise<Fo
   const user = await getCurrentUser();
   if (!user) redirect("/entrar?next=/crear");
 
-  const parsed = ChapterSchema.safeParse({
-    idea: formData.get("idea"),
-    panelCount: formData.get("panelCount"),
-  });
+  const parsed = parseChapterForm(formData);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const style = String(formData.get("style") || DEFAULT_STYLE);
@@ -111,6 +123,7 @@ export async function createSeries(_: FormState, formData: FormData): Promise<Fo
         create: {
           number: 1,
           prompt: parsed.data.idea,
+          mode: parsed.data.mode,
           panelCount: Math.min(parsed.data.panelCount, maxPanels()),
           authorId: user.id,
         },
@@ -138,10 +151,7 @@ export async function createChapter(_: FormState, formData: FormData): Promise<F
     return { error: "Espera a que termine el capítulo anterior antes de crear otro" };
   }
 
-  const parsed = ChapterSchema.safeParse({
-    idea: formData.get("idea"),
-    panelCount: formData.get("panelCount"),
-  });
+  const parsed = parseChapterForm(formData);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const limitError = await checkDailyLimit(user.id);
@@ -153,6 +163,7 @@ export async function createChapter(_: FormState, formData: FormData): Promise<F
       seriesId: series.id,
       number,
       prompt: parsed.data.idea,
+      mode: parsed.data.mode,
       panelCount: Math.min(parsed.data.panelCount, maxPanels()),
       authorId: user.id,
     },

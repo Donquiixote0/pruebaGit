@@ -42,8 +42,12 @@ export const StorySchema = z.object({
 
 export type Story = z.infer<typeof StorySchema>;
 
+export type StoryMode = "idea" | "adaptar";
+
 export type StoryInput = {
   idea: string;
+  /** "idea": inventar a partir de una idea. "adaptar": convertir fielmente el texto en viñetas. */
+  mode: StoryMode;
   genres: string[];
   styleLabel: string;
   panelCount: number;

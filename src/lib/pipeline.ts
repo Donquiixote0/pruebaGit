@@ -57,6 +57,7 @@ async function writeScript(chapterId: string) {
 
   const story = await ai.writeChapter({
     idea: chapter.prompt,
+    mode: chapter.mode === "adaptar" ? "adaptar" : "idea",
     genres: parseGenres(series.genres),
     styleLabel: style.label,
     panelCount: chapter.panelCount,

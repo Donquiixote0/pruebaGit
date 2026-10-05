@@ -27,7 +27,7 @@ export class OllamaProvider implements TextProvider {
           model: this.model,
           stream: false,
           format: z.toJSONSchema(StorySchema),
-          options: { temperature: 0.8, num_ctx: 8192 },
+          options: { temperature: input.mode === "adaptar" ? 0.4 : 0.8, num_ctx: input.mode === "adaptar" ? 16384 : 8192 },
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
             { role: "user", content: buildStoryPrompt(input) },

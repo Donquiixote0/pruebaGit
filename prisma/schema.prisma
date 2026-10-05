@@ -61,8 +61,10 @@ model Chapter {
   number    Int
   title     String   @default("")
   summary   String   @default("")
-  // Idea que escribió el usuario para este capítulo
+  // Idea o texto completo que escribió el usuario para este capítulo
   prompt    String
+  // "idea" = la IA inventa a partir de una idea | "adaptar" = la IA adapta fielmente el texto
+  mode      String   @default("idea")
   panelCount Int     @default(12)
   // PENDING | WRITING | DRAWING | READY | FAILED
   status    String   @default("PENDING")
