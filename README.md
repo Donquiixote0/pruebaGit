@@ -35,8 +35,8 @@ Idea del usuario
 | Web y servidor | Next.js 16 (App Router, Server Actions) + React 19 + TypeScript |
 | Estilos | Tailwind CSS 4 |
 | Base de datos | Prisma + SQLite en desarrollo (PostgreSQL en producción) |
-| IA de texto | OpenAI (`gpt-5.4-mini` por defecto) |
-| IA de imágenes | OpenAI (`gpt-image-2` por defecto) |
+| IA de texto | OpenAI (`gpt-5.4-mini`) **o Ollama gratis en tu PC** |
+| IA de imágenes | OpenAI (`gpt-image-2`) **o ComfyUI gratis con tu tarjeta NVIDIA** |
 | Sesiones | Cookie firmada (JWT con `jose`) + contraseñas con `bcryptjs` |
 
 ## Empezar
@@ -52,7 +52,18 @@ npm run dev               # abre http://localhost:3000
 
 Sin `OPENAI_API_KEY`, la app funciona en **modo demo**: genera historias e imágenes de prueba gratis, ideal para desarrollar.
 
-## Conseguir la clave de OpenAI (importante)
+## Opción gratis: generar con tu propia tarjeta gráfica
+
+Si tienes una tarjeta NVIDIA, puedes dibujar con **ComfyUI** y escribir con **Ollama** sin pagar nada por imagen. Sigue la guía **[docs/IA-LOCAL.md](docs/IA-LOCAL.md)** y pon en `.env`:
+
+```env
+TEXT_PROVIDER="ollama"
+IMAGE_PROVIDER="comfyui"
+```
+
+También puedes mezclar: por ejemplo `TEXT_PROVIDER="openai"` (historias mejores por céntimos) con `IMAGE_PROVIDER="comfyui"` (imágenes gratis).
+
+## Conseguir la clave de OpenAI
 
 La suscripción de **ChatGPT Plus (20 $/mes) no sirve para la API**: son cuentas de facturación separadas.
 
@@ -74,7 +85,7 @@ Casi todo el gasto está en las imágenes. Un capítulo de 12 viñetas usa unas 
 ```
 prisma/schema.prisma          Modelos: User, Series, Character, Chapter, Panel
 src/lib/pipeline.ts           Motor de generación (guion → fichas → portada → viñetas)
-src/lib/ai/                   Proveedores de IA (OpenAI y modo demo)
+src/lib/ai/                   Proveedores de IA (OpenAI, Ollama, ComfyUI y modo demo)
 src/lib/styles.ts             Estilos visuales y géneros
 src/app/actions.ts            Server Actions (registro, login, crear serie/capítulo)
 src/app/series/               Catálogo, ficha de serie y lector

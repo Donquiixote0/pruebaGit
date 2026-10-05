@@ -64,10 +64,20 @@ export type ImageRequest = {
 
 export type GeneratedImage = { data: Buffer; ext: "png" | "svg" | "webp" | "jpeg" };
 
-export interface AIProvider {
+/** Escribe la historia (OpenAI, Ollama o demo). */
+export interface TextProvider {
   readonly name: string;
   /** Devuelve el motivo si el texto infringe las normas, o null si está bien. */
   moderate(text: string): Promise<string | null>;
   writeChapter(input: StoryInput): Promise<Story>;
+}
+
+/** Dibuja las imágenes (OpenAI, ComfyUI o demo). */
+export interface ImageProvider {
+  readonly name: string;
+  /** Cuántas imágenes pedir a la vez */
+  readonly concurrency: number;
   generateImage(req: ImageRequest): Promise<GeneratedImage>;
 }
+
+export type AIProvider = TextProvider & ImageProvider;

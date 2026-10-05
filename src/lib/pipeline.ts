@@ -6,7 +6,6 @@ import { getStyle, parseGenres } from "./styles";
 import { readStoredFile, saveFile } from "./storage";
 import { slugify } from "./slug";
 
-const PANEL_CONCURRENCY = 3;
 const NO_TEXT =
   "Absolutely no text, letters, captions, speech bubbles, sound effects or watermarks in the image.";
 
@@ -158,7 +157,7 @@ async function drawChapter(chapterId: string) {
   // 3. Viñetas (en paralelo, de pocas en pocas)
   const pending = chapter.panels.filter((p) => p.status !== "READY");
   const characterInfo = new Map(series.characters.map((c) => [c.name.toLowerCase(), c]));
-  await mapWithConcurrency(pending, PANEL_CONCURRENCY, async (panel) => {
+  await mapWithConcurrency(pending, ai.concurrency, async (panel) => {
     const names = splitNames(panel.characters);
     const cast = names
       .map((n) => characterInfo.get(n))

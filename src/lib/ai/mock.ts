@@ -7,6 +7,7 @@ import type { AIProvider, ImageRequest, StoryInput } from "./types";
  */
 export class MockProvider implements AIProvider {
   readonly name = "demo";
+  readonly concurrency = 3;
 
   async moderate() {
     return null;
