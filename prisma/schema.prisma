@@ -1,0 +1,96 @@
+// En desarrollo usamos SQLite (un archivo local). Para producción cambia
+// provider a "postgresql" y DATABASE_URL a tu base de datos Postgres.
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  username     String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  series       Series[]
+  chapters     Chapter[]
+}
+
+model Series {
+  id         String      @id @default(cuid())
+  // Identificador corto que va al final del slug: "mi-historia-ab12cd"
+  shortId    String      @unique
+  slug       String
+  title      String
+  synopsis   String      @default("")
+  // Géneros separados por coma, p. ej. "accion,fantasia"
+  genres     String      @default("")
+  // Clave del estilo visual (ver src/lib/styles.ts)
+  style      String
+  coverPath  String?
+  authorId   String
+  author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  characters Character[]
+  chapters   Chapter[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model Character {
+  id           String  @id @default(cuid())
+  seriesId     String
+  series       Series  @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  name         String
+  // Descripción visual fija que se repite en cada prompt para mantener consistencia
+  appearance   String
+  role         String  @default("")
+  refImagePath String?
+
+  @@unique([seriesId, name])
+}
+
+model Chapter {
+  id        String   @id @default(cuid())
+  seriesId  String
+  series    Series   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  number    Int
+  title     String   @default("")
+  summary   String   @default("")
+  // Idea que escribió el usuario para este capítulo
+  prompt    String
+  panelCount Int     @default(12)
+  // PENDING | WRITING | DRAWING | READY | FAILED
+  status    String   @default("PENDING")
+  error     String?
+  panels    Panel[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([seriesId, number])
+}
+
+model Panel {
+  id         String  @id @default(cuid())
+  chapterId  String
+  chapter    Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  index      Int
+  // Descripción de la escena para el modelo de imágenes
+  scene      String
+  shot       String  @default("")
+  // Nombres de personajes que aparecen, separados por coma
+  characters String  @default("")
+  narration  String  @default("")
+  // JSON: [{ "speaker": "...", "text": "..." }]
+  dialogues  String  @default("[]")
+  imagePath  String?
+  // PENDING | READY | FAILED
+  status     String  @default("PENDING")
+  error      String?
+
+  @@unique([chapterId, index])
+}
